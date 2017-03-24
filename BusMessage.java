@@ -3,9 +3,7 @@ package BusDriver;
 import javax.json.*;
 
 public interface BusMessage{
-	int getMsgId();
-	void setMsgId(int msgId);
-	int getDate();
-	void setDate(int date);
+	long getDate();
+	void setDate(long date);
 	JsonObject getContent();
 }	

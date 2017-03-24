@@ -1,20 +1,20 @@
-import java.io.OutputStream;
-import java.io.InputStream;
+package BusDriver;
+
 import java.io.IOException;
-import java.net.Socket;
 import java.net.ServerSocket;
-import javax.json.*;
 
 
 public class Serveur {
 	
-	private ClientManager[] clients;
-	private int nbClients;
+
 
 	public static void main(String[] args) throws IOException{
+		ClientManager[] clients;
+		int nbClients;
 		clients = new ClientManager[1024];
 		nbClients = 0;
 		
+		@SuppressWarnings("resource")
 		ServerSocket srv = new ServerSocket(1234);
 		
 		ClientManager cm = null;
@@ -22,7 +22,7 @@ public class Serveur {
 		//boucle d'acceptation des connexions
 		while(true){
 			try{
-				cm = new ClientManager(srv.accept(), nbClients);
+				cm = new ClientManager(srv.accept(), nbClients,clients);
 			}catch(IOException e){
 				e.printStackTrace();
 			}

@@ -1,32 +1,21 @@
 package BusDriver;
 
 public abstract class BusMessageAbstract implements BusMessage{
-	private int msgId;
-	private int date;
+	private long date;
 	
 	public BusMessageAbstract(){
-		this.msgId = 0;
 		this.date = 0;
 	}
 	
-	public BusMessageAbstract(int msgId, int date){
-		this.msgId = msgId;
+	public BusMessageAbstract(long date){
 		this.date = date;
 	}
 	
-	public int getMsgId(){
-		return this.msgId;
-	}
-	
-	public void setMsgId(int msgId){
-		this.msgId = msgId;
-	}
-	
-	public int getDate(){
+	public long getDate(){
 		return this.date;
 	}
 	
-	public void setDate(int date){
+	public void setDate(long date){
 		this.date = date;
 	}
 	

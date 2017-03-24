@@ -1,17 +1,15 @@
-import java.net.MalformedURLException;
+package BusDriver;
+
 import java.net.Socket;
-import java.net.URL;
 import java.net.UnknownHostException;
-import java.nio.charset.StandardCharsets;
 import java.io.IOException;
-import java.io.StringReader;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
+import java.io.StringReader;
 
 import javax.json.*;
 
-public class TestJSON {
+public class Client {
 
 	/**
 	*	@resum: methode permettant de lire une chaine au format JSON se terminant par un '\n'
@@ -42,11 +40,11 @@ public class TestJSON {
 		// TODO Auto-generated method stub
 		try {
 			//exemple de requête JSON de type register 
+			@SuppressWarnings("resource")
 			Socket s = new Socket("127.0.0.1",1234);
 			s.setKeepAlive(true);
 			OutputStream out = s.getOutputStream();
 			JsonObjectBuilder jb = Json.createObjectBuilder();
-			JsonWriter jw = Json.createWriter(out);//Gère le flux json
 			jb.add("type","register");//ajout d'un champ 'type' de valeur 'register' dans la requête json
 			jb.add("sender_class","GPS");//************** 'sender_class' ** 'GPS' ***********************
 			jb.add("sender_name","GPS1.5");//************* 'sender_name' ** 'GPS1.5' ********************
@@ -54,6 +52,8 @@ public class TestJSON {
 			StringBuffer sb = new StringBuffer(res.toString());//création d'une chaine au format JSON
 			sb.append('\n');//ajout d'un '/n' à la fin
 			out.write(sb.toString().getBytes("UTF-8"));//ecriture sur le flux de la chaine au format JSON
+			String ret = readJsonString(s.getInputStream());
+			//JsonObject job = Json.createReader(new StringReader(ret));
 			//Partie pour traiter une eventuelle réponse
 			/*
 			System.out.println("Request sent !"+res.toString());
