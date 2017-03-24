@@ -127,8 +127,8 @@ public class ClientManager extends Thread{
 	private void ackConnect(){
 		JsonObjectBuilder jb = Json.createObjectBuilder();
 		jb.add("type","register");
-		jb.add("ack","ok");
-		jb.add("id",this.id);
+		createOkResponseBuilder(jb);
+		jb.add("sender_id",this.id);
 		JsonObject res = jb.build();
 		this.writeJsonString(res);
 		this.status = true;
@@ -147,13 +147,12 @@ public class ClientManager extends Thread{
 			while(this.in.available() == 0)
 				;
 			while( (c=this.in.read()) != '\n'){
-				System.out.print((char)c);
+				//System.out.print((char)c);
 				sb.append((char)c);
 			}
 		}catch(IOException e){
 			e.printStackTrace();
 		}
-		System.out.println("Ok");
 		return sb.toString();
 	}
 	
@@ -192,15 +191,16 @@ public class ClientManager extends Thread{
 	private JsonArray getConnectedDeviceByName(String deviceName){
 		JsonArrayBuilder jab = Json.createArrayBuilder();
 		for(int i=0 ; i < tabClients.length; i++)
-			if(tabClients[i].isConnected() && deviceName.equals(tabClients[i].getDeviceName()))
-				jab.add(this.getClientJsonObject(tabClients[i]));
+			if(tabClients[i] != null)
+				if(tabClients[i].isConnected() && deviceName.equals(tabClients[i].getDeviceName()))
+					jab.add(this.getClientJsonObject(tabClients[i]));
 		return jab.build();
 	}
 	
 	private void createOkResponseBuilder(JsonObjectBuilder job){
 		JsonObjectBuilder jobAck = Json.createObjectBuilder();
 		jobAck.add("resp","ok");
-		job.add("resp",jobAck.build());
+		job.add("ack",jobAck.build());
 	}
 	
 	private void treatCmd(String cmd,JsonObject obj)
@@ -214,26 +214,26 @@ public class ClientManager extends Thread{
 		}
 		
 		else if(cmd.equals("list")){
+			System.out.println("Demande de listing");
 			job.add("type","list");
-			if(obj.isNull("sender_name")&&obj.isNull("sender_class")){
+			String name = obj.getString("sender_name","");
+			String dclass = obj.getString("sender_class","");
+			
+			if(name.compareTo("") == 0 && dclass.compareTo("") == 0){
 				createOkResponseBuilder(job);
 				job.add("results",this.getConnectedDevice());
 			}
 			
-			else if(obj.isNull("sender_name")){
+			else if(name.compareTo("") == 0){
 				createOkResponseBuilder(job);
-				job.add("result",this.getConnectedDeviceByClass(obj.getString("sender_class")));
-			}
-			
-			else if(obj.isNull("sender_class")){
-				createOkResponseBuilder(job);
-				job.add("result",this.getConnectedDeviceByName(obj.getString("sender_name")));
+				job.add("results",this.getConnectedDeviceByClass(obj.getString("sender_class")));
 			}
 			
 			else{
-				this.sendError("list",400);		
-				return;
+				createOkResponseBuilder(job);
+				job.add("results",this.getConnectedDeviceByName(obj.getString("sender_name")));
 			}
+			
 		}
 		
 		else if(cmd.equals("get")){
@@ -241,7 +241,8 @@ public class ClientManager extends Thread{
 		}
 		
 		else if(cmd.equals("get_last")){
-			if(obj.isNull("sender_id") || obj.isNull("msg_id")){
+			job.add("type", "get_last");
+			if(obj.getInt("sender_id",-1) == -1){
 				sendError("get_last",400);
 				return;
 			}
@@ -276,6 +277,7 @@ public class ClientManager extends Thread{
 		if(this.isConnected()){
 			
 			if(cmd.equals("send")){
+				System.out.println("Reception d'un message");
 				if(obj.isNull("sender_id") || obj.isNull("contents")){
 					sendError("send",400);
 					return ;
@@ -291,8 +293,11 @@ public class ClientManager extends Thread{
 			}
 			
 		}
-			
-		this.writeJsonString(job.build());
+		
+		if(!job.build().isEmpty()){
+			System.out.println(job.build().toString());
+			this.writeJsonString(job.build());
+		}
 	}
 
 	
