@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.StringReader;
-import java.net.ServerSocket;
 import javax.json.*;
 
 public class ClientManager extends Thread{
@@ -33,11 +32,7 @@ public class ClientManager extends Thread{
 	}
 	
 	public int getLastMessageId(){
-		return 0;//TODO implements fonction
-	}
-	
-	public void setLastMessageId(int lastMessageId){
-		;//TODO implements fonction
+		return this.queue.getLastId();
 	}
 	
 	public String getDeviceClass(){
@@ -237,7 +232,31 @@ public class ClientManager extends Thread{
 		}
 		
 		else if(cmd.equals("get")){
-			
+			job.add("type", "get");
+			if(obj.getInt("sender_id",-1) == -1){
+				sendError("get",400);
+				return;
+			}
+			ClientManager tmp = this.tabClients[obj.getInt("sender_id")];
+			if(tmp==null){
+				sendError("get",500);
+				return;
+			}
+			if(tmp.queue.isEmpty()){
+				sendError("get",500);
+				return;
+			}
+			if(tabClients[obj.getInt("sender_id")] == null){
+				sendError("get",450);
+				return;
+			}
+			BusMessage mess = tabClients[obj.getInt("sender_id")].queue.getById(obj.getInt("msg_id"));
+			if(mess == null)
+				sendError("get", 404);
+			createOkResponseBuilder(job);
+			job.add("msg_id", obj.getInt("msg_id"));
+			job.add("date", mess.getDate());
+			job.add("contents", mess.getContent());
 		}
 		
 		else if(cmd.equals("get_last")){
@@ -311,20 +330,5 @@ public class ClientManager extends Thread{
 			treatCmd(obj.getString("type"),obj);
 		}
 	}
-	
-	public static void main(String[] args){
-		ClientManager cm = null;
-		try{
-			ServerSocket srv = new ServerSocket(1234);
-			//cm = new ClientManager(srv.accept(),0);
-		}catch(IOException e){
-			e.printStackTrace();
-		}
-		cm.start();
-		System.out.println("thread started");
-		while(true)
-			;			
-	}
-	
 }
 				

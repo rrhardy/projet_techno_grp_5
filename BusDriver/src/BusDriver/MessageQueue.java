@@ -1,10 +1,11 @@
 package BusDriver;
 
+//file de messages implémentée par un tableau
 public class MessageQueue{
 
 	private BusMessage[] queue;
 	private int sizeMax;
-	private int last;
+	private int last; //indice du dernier message
 
 	public MessageQueue(int initSize){
 		this.queue = new BusMessage[initSize];
@@ -23,6 +24,11 @@ public class MessageQueue{
 		return queue[this.last];
 	}
 	
+	public BusMessage getById(int id){
+		if(id > last || queue[id] == null)
+			return null;
+		return queue[id];
+	}
 	public int getLastId(){
 		return last;
 	}
