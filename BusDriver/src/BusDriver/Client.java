@@ -1,7 +1,6 @@
 package BusDriver;
 
 import java.net.Socket;
-import java.net.UnknownHostException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -13,12 +12,12 @@ public class Client {
 	
 	private int id;
 	private int current_msg;
-	public final String senderClass = "GPS";
-	public final String sender_name = "GPSTest";
+	public String senderClass;
+	public String senderName;
 	private InputStream in;
 	private OutputStream out;
 	
-	public Client(String adr){
+	public Client(String adr,String senderClass, String senderName){
 		Socket s;
 		try {
 			s = new Socket(adr,1234);
@@ -31,6 +30,8 @@ public class Client {
 		
 		this.current_msg = 0;
 		this.id = 0;
+		this.senderClass = senderClass;
+		this.senderName = senderName;
 	}
 	
 	public int getId(){
@@ -45,8 +46,8 @@ public class Client {
 		JsonObjectBuilder jb = Json.createObjectBuilder();
 		System.out.print("Demande d'enregistrement...");
 		jb.add("type","register");//ajout d'un champ 'type' de valeur 'register' dans la requête json
-		jb.add("sender_class","GPS");//************** 'sender_class' ** 'GPS' ***********************
-		jb.add("sender_name","GPS1.5");//************* 'sender_name' ** 'GPS1.5' ********************
+		jb.add("sender_class",senderClass);//************** 'sender_class' ** 'GPS' ***********************
+		jb.add("sender_name",senderName);//************* 'sender_name' ** 'GPS1.5' ********************
 		JsonObject res = jb.build();//création de l'objet json
 		writeJsonString(out,res);
 		String ret = readJsonString(this.in);
@@ -70,95 +71,11 @@ public class Client {
 		
 	}
 	
-	public boolean list(){
-		JsonObjectBuilder jb = Json.createObjectBuilder();
-		jb.add("type","list");
-		JsonObject res = jb.build();
-		writeJsonString(out,res);
-		String ret = readJsonString(this.in);
-		
-		JsonObject resp = Json.createReader(new StringReader(ret)).readObject();
-		if(resp.getString("type","").compareTo("list") == 0){
-			if(resp.getJsonObject("ack").getString("resp").compareTo("ok") == 0){
-				int a = 0;
-				JsonArray list = resp.getJsonArray("results");
-				a = Json.createReader( new StringReader(list.get(0).toString())).readObject().getInt("sender_id");
-				System.out.println("Listing recu, nombre de rep reçu: "+list.size());
-				return true;
-			}
-			else{
-				System.out.println("Error: "+resp.getJsonObject("ack").getInt("error_id"));
-				return false;
-			}
-		}
-		else{
-			System.out.println("Mauvaise Réponse Serveur");
-			return false;
-		}
-		
-	}
-	
-	public boolean listByName(String sender_name){
-		JsonObjectBuilder jb = Json.createObjectBuilder();
-		jb.add("type","list");
-		jb.add("sender_name",sender_name);
-		JsonObject res = jb.build();
-		writeJsonString(out,res);
-		String ret = readJsonString(this.in);
-		
-		JsonObject resp = Json.createReader(new StringReader(ret)).readObject();
-		if(resp.getString("type","").compareTo("list") == 0){
-			if(resp.getJsonObject("ack").getString("resp").compareTo("ok") == 0){
-				int a = 0;
-				JsonArray list = resp.getJsonArray("results");
-				a = Json.createReader( new StringReader(list.get(0).toString())).readObject().getInt("sender_id");
-				System.out.println("Listing recu, nombre de rep reçu: "+list.size());
-				return true;
-			}
-			else{
-				System.out.println("Error: "+resp.getJsonObject("ack").getInt("error_id"));
-				return false;
-			}
-		}
-		else{
-			System.out.println("Mauvaise Réponse Serveur");
-			return false;
-		}
-	}
-	
-	public boolean listByClass(String sender_class){
-		JsonObjectBuilder jb = Json.createObjectBuilder();
-		jb.add("type","list");
-		jb.add("sender_class",sender_class);
-		JsonObject res = jb.build();
-		writeJsonString(out,res);
-		String ret = readJsonString(this.in);
-		
-		JsonObject resp = Json.createReader(new StringReader(ret)).readObject();
-		if(resp.getString("type","").compareTo("list") == 0){
-			if(resp.getJsonObject("ack").getString("resp").compareTo("ok") == 0){
-				int a = 0;
-				JsonArray list = resp.getJsonArray("results");
-				a = Json.createReader( new StringReader(list.get(0).toString())).readObject().getInt("sender_id");
-				System.out.println("Listing recu, nombre de rep reçu: "+list.size());
-				return true;
-			}
-			else{
-				System.out.println("Error: "+resp.getJsonObject("ack").getInt("error_id"));
-				return false;
-			}
-		}
-		else{
-			System.out.println("Mauvaise Réponse Serveur");
-			return false;
-		}
-	}
-	public boolean sendGPSMessage(double lat, double lng){
-		GpsMessage gm = new GpsMessage(lat,lng);
+	public boolean sendMessage(BusMessage bm){
 		JsonObjectBuilder jb = Json.createObjectBuilder();
 		jb.add("type", "send");
 		jb.add("sender_id", id);
-		jb.add("contents",gm.getContent());
+		jb.add("contents",bm.getContent());
 		jb.build();
 		JsonObject res = jb.build();
 		writeJsonString(out,res);
@@ -166,7 +83,6 @@ public class Client {
 		JsonObject resp = Json.createReader(new StringReader(ret)).readObject();
 		if(resp.getString("type").compareTo("send") == 0){
 			if(resp.getJsonObject("ack").getString("resp").compareTo("ok") == 0){
-				System.out.println("Message envoyé et reçu par le bus!");
 				return true;
 			}
 
@@ -266,35 +182,22 @@ public class Client {
 	 */
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		int id = 0;
-		try {
-			//exemple de requête JSON de type register 
-			@SuppressWarnings("resource")
-			Socket s = new Socket("127.0.0.1",1234);
-			s.setKeepAlive(true);
-			OutputStream out = s.getOutputStream();
-			
-			
-			
-			
-			//JsonObject job = Json.createReader(new StringReader(ret));
-			//Partie pour traiter une eventuelle réponse
-			/*
-			System.out.println("Request sent !"+res.toString());
-			InputStream input = s.getInputStream();
-			JsonReader jr = Json.createReader(new StringReader(TestJSON.readJsonString(input)));//récupération du flux json
-			JsonObject obj = jr.readObject();//lecture du flux
-	    System.out.println(obj.getString("type"));//affichage d'un champ
-	    System.out.println(obj.getString("ack"));
-	    System.out.println(obj.getInt("id"));
-	    s.close();//fermeture du socket
-	    */
-		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		//Main test
+		Client c = new Client("127.0.0.1","GPS","GPSTest");//connexion
+		//register to bus
+		if(c.register()){
+			for(int i=0 ; i<100 ; i++){
+				GpsMessage mess = new GpsMessage(45.4554+i,45.51121+i);//creating new message
+				System.out.println(mess.getContent().toString());
+				if(!c.sendMessage(mess))//message sending
+					System.exit(-1);//Message not send (Bus error)
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
 		}
 	}
 }

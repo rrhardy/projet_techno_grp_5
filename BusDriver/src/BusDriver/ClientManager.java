@@ -68,35 +68,34 @@ public class ClientManager extends Thread{
 	}
 	
 	private void addContent(JsonObject contents){
+		BusMessage mess = null;
 		if(this.deviceClass.equals("GPS")){
 			if(contents.isNull("lat") || contents.isNull("lng")){
 				sendError("send",400);
 			}
 			else{
-				GpsMessage mess = new GpsMessage(contents.getJsonNumber("lat").doubleValue(),contents.getJsonNumber("lng").doubleValue());
-				queue.add(mess);
-				JsonObjectBuilder job = Json.createObjectBuilder();
-				job.add("type","send");
-				this.createOkResponseBuilder(job);
-				this.writeJsonString(job.build());
+				mess = (BusMessage)new GpsMessage(contents.getJsonNumber("lat").doubleValue(),contents.getJsonNumber("lng").doubleValue());
 			}
 		}
 		
-		else if(this.deviceClass.equals("Accelerometer")){
+		else if(this.deviceClass.equals("Accelerometer") || this.deviceClass.equals("Gyroscope")){
 			if(contents.isNull("x") || contents.isNull("y") || contents.isNull("z")){
 				sendError("send",400);
+			}
+			else{
+				mess = (BusMessage)new TriPointMessage(contents.getJsonNumber("x").doubleValue(), contents.getJsonNumber("y").doubleValue(),contents.getJsonNumber("z").doubleValue());
 			}
 			
 		}
 		
-		else if(this.deviceClass.equals("Gyroscope")){
-			if(contents.isNull("x") || contents.isNull("y") || contents.isNull("z")){
-				sendError("send",400);
-			}
-		}
-		
 		else
 			sendError("send",400);
+		
+		queue.add(mess);
+		JsonObjectBuilder job = Json.createObjectBuilder();
+		job.add("type", "send");
+		this.createOkResponseBuilder(job);
+		this.writeJsonString(job.build());
 	}
 	
 	private void sendError(String repType, int code){
@@ -170,16 +169,18 @@ public class ClientManager extends Thread{
 	private JsonArray getConnectedDevice(){
 		JsonArrayBuilder jab = Json.createArrayBuilder();
 		for(int i=0 ; i<this.tabClients.length;i++)
-			if(tabClients[i].isConnected())
-				jab.add(this.getClientJsonObject(tabClients[i]));
+			if(tabClients[i] != null)
+				if(tabClients[i].isConnected())
+					jab.add(this.getClientJsonObject(tabClients[i]));
 		return jab.build();
 	}
 	
 	private JsonArray getConnectedDeviceByClass(String deviceClass){
 		JsonArrayBuilder jab = Json.createArrayBuilder();
 		for(int i=0 ; i< this.tabClients.length;i++)
-			if(tabClients[i].isConnected() && deviceClass.equals(tabClients[i].getDeviceClass()))
-				jab.add(this.getClientJsonObject(tabClients[i]));
+			if(tabClients[i] != null)
+				if(tabClients[i].isConnected() && deviceClass.compareTo(tabClients[i].getDeviceClass()) == 0)
+					jab.add(this.getClientJsonObject(tabClients[i]));
 		return jab.build();
 	}
 	
@@ -187,7 +188,7 @@ public class ClientManager extends Thread{
 		JsonArrayBuilder jab = Json.createArrayBuilder();
 		for(int i=0 ; i < tabClients.length; i++)
 			if(tabClients[i] != null)
-				if(tabClients[i].isConnected() && deviceName.equals(tabClients[i].getDeviceName()))
+				if(tabClients[i].isConnected() && deviceName.compareTo(this.tabClients[i].getDeviceName()) == 0)
 					jab.add(this.getClientJsonObject(tabClients[i]));
 		return jab.build();
 	}
@@ -198,6 +199,7 @@ public class ClientManager extends Thread{
 		job.add("ack",jobAck.build());
 	}
 	
+	/*Fonction permettant de traiter une commande recu par le BUS*/
 	private void treatCmd(String cmd,JsonObject obj)
 	{
 		JsonObjectBuilder job = Json.createObjectBuilder();
@@ -213,7 +215,6 @@ public class ClientManager extends Thread{
 			job.add("type","list");
 			String name = obj.getString("sender_name","");
 			String dclass = obj.getString("sender_class","");
-			
 			if(name.compareTo("") == 0 && dclass.compareTo("") == 0){
 				createOkResponseBuilder(job);
 				job.add("results",this.getConnectedDevice());
@@ -278,6 +279,7 @@ public class ClientManager extends Thread{
 				sendError("get_last",450);
 				return;
 			}
+			
 			BusMessage mess = tabClients[obj.getInt("sender_id")].queue.getLast();
 			createOkResponseBuilder(job);
 			job.add("msg_id",tabClients[obj.getInt("sender_id")].queue.getLastId());
