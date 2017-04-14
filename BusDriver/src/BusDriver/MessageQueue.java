@@ -39,7 +39,7 @@ public class MessageQueue{
 			return ;
 		}
 
-		if(this.sizeMax == this.last){
+		if(this.sizeMax == this.last+1){
 			queue[0] = mess;
 			this.last = 0;
 		}
