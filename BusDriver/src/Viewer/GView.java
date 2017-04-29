@@ -1,5 +1,4 @@
 package Viewer;
 
-public interface GView {
-	void startView();
+public interface GView extends Runnable{
 }

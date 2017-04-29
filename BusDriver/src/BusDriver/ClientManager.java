@@ -7,17 +7,33 @@ import java.io.OutputStream;
 import java.io.StringReader;
 import javax.json.*;
 
+/** 
+ * Cette classe permet de gérer le socket d'un client connecté au Bus
+ * Ce socket est géré par un thread (fonction run)
+ * 
+ * @author Robin Hardy 
+ * @author Paul José-Vedrenne
+ */
 public class ClientManager extends Thread{
 
-	private OutputStream out;
-	private InputStream in;
-	private String deviceClass;
-	private String deviceName;
-	private int id;
+	//PRIVATE VARIABLE
+	private OutputStream out;//socket output Stream
+	private InputStream in;//socket input stream
+	private String deviceClass;//Device class
+	private String deviceName;//device name
+	private int id;//identifiant 
 	private boolean status;//Auth status
-	private ClientManager[] tabClients;
-	private MessageQueue queue;
+	private ClientManager[] tabClients;//tableau des clients 
+	private MessageQueue queue;//file de message
 	
+	/**
+	 * Crée une instance de ClientManger servant à gérer un socket connecté au bus
+	 *  
+	 * @param client Le socket à gérer
+	 * @param id L'identifiant du socket à gerer (représente le sender_id pour un sender)
+	 * @param tabClients Le tableau qui contient les autre instance ClientManager 
+	 * demarré sur le serveur, permet à un clients observateur de récupérer des informations sur les autre client 
+	 */
 	public ClientManager(Socket client, int id, ClientManager[] tabClients){
 		try{
 			this.out = client.getOutputStream();
@@ -31,42 +47,75 @@ public class ClientManager extends Thread{
 		this.queue = new MessageQueue(50);
 	}
 	
+	/**
+	 * @return L'identifiant du dernier message envoyé par le client connecté
+	 */
 	public int getLastMessageId(){
 		return this.queue.getLastId();
 	}
 	
+	/**
+	 * @return La classe du device connecté (GPS,gyroscope,acclerometer,...)
+	 */
 	public String getDeviceClass(){
 		return new String(deviceClass);
 	}
 	
+	/**
+	 * @param deviceClass La classe du device 
+	 */
 	public void setDeviceClass(String deviceClass){
 		this.deviceClass = new String(deviceClass);
 	}
 	
+	/**
+	 * @return Le nom du device
+	 */ 
 	public String getDeviceName(){
 		return new String(deviceName);
 	}
 	
+	/**
+	 * @param deviceName Le nouveau nom du device
+	 */
 	public void setDeviceName(String deviceName){
 		this.deviceName = new String(deviceName);
 	}
 	
+	/**
+	 * @return L'identifiant du client connecté au bus (sender_id)
+	 */
 	public int getID(){
 		return this.id;
 	}
 	
+	/**
+	 * @param id Le nouvelle identifiant du device connecté au bus
+	 */
 	public void setID(int id){
 		this.id = id;
 	}
 	
+	/**
+	 * @return True si enregistré (registrer ok) False sinon
+	 */
 	public boolean isConnected(){
 		return this.status;
 	}
 	
+	/**
+	 * @param status Le nouveau status de connection
+	 */
 	public void setConnected(boolean status){
 		this.status = status;
 	}
 	
+	
+	/*
+	 * PRIVATE FUNCTIONS FOR INTERNAL CLASS TREATMENT
+	*/
+	
+	/*Ajoute un nouveau message (contents) à la file*/
 	private void addContent(JsonObject contents){
 		BusMessage mess = null;
 		if(this.deviceClass.equals("GPS")){
@@ -98,6 +147,7 @@ public class ClientManager extends Thread{
 		this.writeJsonString(job.build());
 	}
 	
+	/*Envoie une erreur identifié par repType et code au client*/
 	private void sendError(String repType, int code){
 		JsonObjectBuilder jb = Json.createObjectBuilder();
 		JsonObjectBuilder ack = Json.createObjectBuilder();
@@ -110,6 +160,7 @@ public class ClientManager extends Thread{
 	
 	}
 	
+	/*Methode d'envoie bas niveau*/
 	private void sendString(String toSend){
 		try{
 			this.out.write(toSend.getBytes("UTF-8"));
@@ -118,6 +169,7 @@ public class ClientManager extends Thread{
 		}
 	}
 	
+	/*Methode d'envoie d'un acquitement positif de connection*/
 	private void ackConnect(){
 		JsonObjectBuilder jb = Json.createObjectBuilder();
 		jb.add("type","register");
@@ -128,12 +180,14 @@ public class ClientManager extends Thread{
 		this.status = true;
 	}
 	
+	/*Adaptation de la reponse obj pour un envoie bas niveau + envoie*/
 	private void writeJsonString(JsonObject obj){
 		StringBuffer sb = new StringBuffer(obj.toString());
-		sb.append('\n');
+		sb.append('\n');//Ajout d'un caractère de fin de trame
 		sendString(sb.toString());
 	}
 	
+	/*Lecture bas niveau*/
 	private String readJsonString(){
 		StringBuffer sb = new StringBuffer();
 		int c = 0;
@@ -141,8 +195,7 @@ public class ClientManager extends Thread{
 			while(this.in.available() == 0)
 				;
 			while( (c=this.in.read()) != '\n'){
-				//System.out.print((char)c);
-				sb.append((char)c);
+				sb.append((char)c);//Lecture caractère par caractère
 			}
 		}catch(IOException e){
 			e.printStackTrace();
@@ -150,12 +203,20 @@ public class ClientManager extends Thread{
 		return sb.toString();
 	}
 	
+	/*
+	 * Traitement d'une demande de connection, lecture de jobConnect contenant
+	 * Contenant une requete de type connect
+	 * 
+	 * */
 	private void getConnect(JsonObject jobConnect){
 		this.deviceClass = jobConnect.getString("sender_class");
 		this.deviceName = jobConnect.getString("sender_name");
 		this.ackConnect();
 	}
 	
+	/*Recuperation de info d'un device connecté sous forme 
+	 * d'object JSON
+	 */
 	private JsonObject getClientJsonObject(ClientManager client){
 		JsonObjectBuilder job = Json.createObjectBuilder();
 		job.add("sender_id",client.getID());
@@ -166,6 +227,9 @@ public class ClientManager extends Thread{
 		return job.build();
 	}
 	
+	/*Recupération pour une commande de type list de tous les clients connecté sous forme
+	 * d'un tableau JSON
+	 */
 	private JsonArray getConnectedDevice(){
 		JsonArrayBuilder jab = Json.createArrayBuilder();
 		for(int i=0 ; i<this.tabClients.length;i++)
@@ -175,6 +239,7 @@ public class ClientManager extends Thread{
 		return jab.build();
 	}
 	
+	/*Similaire à getConnectedDevice mais applique un filtrage sur le ClassName*/
 	private JsonArray getConnectedDeviceByClass(String deviceClass){
 		JsonArrayBuilder jab = Json.createArrayBuilder();
 		for(int i=0 ; i< this.tabClients.length;i++)
@@ -184,6 +249,7 @@ public class ClientManager extends Thread{
 		return jab.build();
 	}
 	
+	/*///////////////////////////////////////////////////////////// DeviceName*/
 	private JsonArray getConnectedDeviceByName(String deviceName){
 		JsonArrayBuilder jab = Json.createArrayBuilder();
 		for(int i=0 ; i < tabClients.length; i++)
@@ -193,6 +259,7 @@ public class ClientManager extends Thread{
 		return jab.build();
 	}
 	
+	/*Creer une reponse de type OK sur l'entete job*/
 	private void createOkResponseBuilder(JsonObjectBuilder job){
 		JsonObjectBuilder jobAck = Json.createObjectBuilder();
 		jobAck.add("resp","ok");
@@ -322,6 +389,12 @@ public class ClientManager extends Thread{
 	}
 
 	
+	//FONCTION PRINCIPALE DU THREAD
+	/**
+	* Boucle tant que le client n'as pas envoyé de reqête de type deregister
+	* 
+	* @see java.lang.Thread#run()
+	*/
 	public void run()
 	{
 		JsonReader jr;

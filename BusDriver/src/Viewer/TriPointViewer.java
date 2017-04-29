@@ -3,14 +3,15 @@ package Viewer;
 import java.sql.Timestamp;
 
 import javax.json.JsonObject;
+import javax.swing.JFrame;
 
 public class TriPointViewer extends GViewAbstract{
 	
-	public TriPointViewer(int id, Viewer v){
-		super(id,v);
+	public TriPointViewer(JFrame frame, int id, Viewer v){
+		super(frame,id,v);
 	}
 	
-	public void startView(){
+	public void run(){
 		while(true){
 			JsonObject resp = v.getLastMessage(this.id);
 			try{

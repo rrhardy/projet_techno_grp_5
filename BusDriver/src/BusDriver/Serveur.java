@@ -6,6 +6,7 @@ import java.net.ServerSocket;
 
 public class Serveur {
 	
+
 	public static void main(String[] args) throws IOException{
 		ClientManager[] clients;
 		int nbClients;
