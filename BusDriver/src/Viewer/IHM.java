@@ -16,6 +16,13 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import javax.swing.JLabel;
 
+/**
+ * Cette classe permet de lancer une IHM de visualisation du bus, et des devices qui y sont connectés 
+ * 
+ * @author Robin Hardy
+ * @author Paul José-Vedrenne 
+ *
+ */
 public class IHM extends JFrame implements ActionListener{
 	/**
 	 * 
@@ -43,10 +50,11 @@ public class IHM extends JFrame implements ActionListener{
 			System.err.println("Usage: "+IHM.class + " <srv adr>");
 			System.exit(-1);
 		}
+		final String ip = args[0];
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					IHM frame = new IHM(args[0]);
+					IHM frame = new IHM(ip);
 					frame.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -123,7 +131,6 @@ public class IHM extends JFrame implements ActionListener{
 		getContentPane().add(btnStartView);
 		btnList = new JButton("List");
 		btnList.addMouseListener(new MouseAdapter() {
-			private Device[] listRes;
 
 			@Override
 			public void mouseClicked(MouseEvent e) {
@@ -140,13 +147,11 @@ public class IHM extends JFrame implements ActionListener{
 				else
 					res = v.getListByClass(classe);
 				
-				listRes = new Device[res.length];
 				String[] disp = new String[res.length];
 				for(int i=0 ; i<res.length ; i++)
-					if(res[i] != null){
+					if(res[i] != null)
 						disp[i] = res[i].getInt("sender_id",-1)+"      "+res[i].getString("sender_class")+"      "+res[i].getString("sender_name");
-						listRes[i] = new Device(res[i].getInt("sender_id",-1),res[i].getString("sender_class"),res[i].getString("sender_name"));
-					}
+					
 				
 				list.setListData(disp);
 				

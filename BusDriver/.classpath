@@ -2,8 +2,9 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="src/BusDriver/javax.json-1.0.jar"/>
-	<classpathentry kind="lib" path="src/Viewer/jxmapviewer2-2.0.jar"/>
-	<classpathentry kind="lib" path="src/Viewer/org-apache-commons-logging.jar"/>
+	<classpathentry kind="lib" path="lib/jar/commons-logging-1.2.jar"/>
+	<classpathentry kind="lib" path="lib/jar/javax.json-1.0.jar"/>
+	<classpathentry kind="lib" path="lib/jar/jxmapviewer2-2.0.jar"/>
+	<classpathentry kind="lib" path="/home/paul/android-sdks/platforms/android-25/android.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

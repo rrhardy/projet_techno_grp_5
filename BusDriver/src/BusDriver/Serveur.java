@@ -3,7 +3,15 @@ package BusDriver;
 import java.io.IOException;
 import java.net.ServerSocket;
 
+import utils.Protocol;
 
+/**
+ * Cette classe permet de lancer le serveur sur toute les ip disponible sur le port 7182
+ * 
+ * @author Robin Hardy
+ * @author Paul José-Vedrenne
+ *
+ */
 public class Serveur {
 	
 
@@ -14,7 +22,7 @@ public class Serveur {
 		nbClients = 0;
 		
 		@SuppressWarnings("resource")
-		ServerSocket srv = new ServerSocket(1234);
+		ServerSocket srv = new ServerSocket(Protocol.PORT_NUMBER);
 		System.out.println("Serveur démarré");
 		ClientManager cm = null;
 		

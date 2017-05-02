@@ -7,12 +7,14 @@ import java.io.OutputStream;
 import java.io.StringReader;
 import javax.json.*;
 
+import utils.Protocol;
+
 /** 
- * Cette classe permet de gérer le socket d'un client connecté au Bus
- * Ce socket est géré par un thread (fonction run)
+ * Cette classe permet de gï¿½rer le socket d'un client connectï¿½ au Bus
+ * Ce socket est gï¿½rï¿½ par un thread (fonction run)
  * 
  * @author Robin Hardy 
- * @author Paul José-Vedrenne
+ * @author Paul Josï¿½-Vedrenne
  */
 public class ClientManager extends Thread{
 
@@ -27,12 +29,12 @@ public class ClientManager extends Thread{
 	private MessageQueue queue;//file de message
 	
 	/**
-	 * Crée une instance de ClientManger servant à gérer un socket connecté au bus
+	 * Cree une instance de ClientManger servant a gerer un socket connecte au bus
 	 *  
-	 * @param client Le socket à gérer
-	 * @param id L'identifiant du socket à gerer (représente le sender_id pour un sender)
+	 * @param client Le socket a gerer
+	 * @param id L'identifiant du socket a gerer (represente le sender_id pour un sender)
 	 * @param tabClients Le tableau qui contient les autre instance ClientManager 
-	 * demarré sur le serveur, permet à un clients observateur de récupérer des informations sur les autre client 
+	 * demarre sur le serveur, permet a un clients observateur de recuperer des informations sur les autre client 
 	 */
 	public ClientManager(Socket client, int id, ClientManager[] tabClients){
 		try{
@@ -48,14 +50,14 @@ public class ClientManager extends Thread{
 	}
 	
 	/**
-	 * @return L'identifiant du dernier message envoyé par le client connecté
+	 * @return L'identifiant du dernier message envoye par le client connecte
 	 */
 	public int getLastMessageId(){
 		return this.queue.getLastId();
 	}
 	
 	/**
-	 * @return La classe du device connecté (GPS,gyroscope,acclerometer,...)
+	 * @return La classe du device connecte (GPS,gyroscope,acclerometer,...)
 	 */
 	public String getDeviceClass(){
 		return new String(deviceClass);
@@ -83,21 +85,21 @@ public class ClientManager extends Thread{
 	}
 	
 	/**
-	 * @return L'identifiant du client connecté au bus (sender_id)
+	 * @return L'identifiant du client connecte au bus (sender_id)
 	 */
 	public int getID(){
 		return this.id;
 	}
 	
 	/**
-	 * @param id Le nouvelle identifiant du device connecté au bus
+	 * @param id Le nouvelle identifiant du device connecte au bus
 	 */
 	public void setID(int id){
 		this.id = id;
 	}
 	
 	/**
-	 * @return True si enregistré (registrer ok) False sinon
+	 * @return True si enregistrÃ© (registrer ok) False sinon
 	 */
 	public boolean isConnected(){
 		return this.status;
@@ -115,7 +117,7 @@ public class ClientManager extends Thread{
 	 * PRIVATE FUNCTIONS FOR INTERNAL CLASS TREATMENT
 	*/
 	
-	/*Ajoute un nouveau message (contents) à la file*/
+	/*Ajoute un nouveau message (contents) Ã  la file*/
 	private void addContent(JsonObject contents){
 		BusMessage mess = null;
 		if(this.deviceClass.equals("GPS")){
@@ -147,7 +149,7 @@ public class ClientManager extends Thread{
 		this.writeJsonString(job.build());
 	}
 	
-	/*Envoie une erreur identifié par repType et code au client*/
+	/*Envoie une erreur identifiï¿½ par repType et code au client*/
 	private void sendError(String repType, int code){
 		JsonObjectBuilder jb = Json.createObjectBuilder();
 		JsonObjectBuilder ack = Json.createObjectBuilder();
@@ -158,15 +160,6 @@ public class ClientManager extends Thread{
 		writeJsonString(jb.build());
 		
 	
-	}
-	
-	/*Methode d'envoie bas niveau*/
-	private void sendString(String toSend){
-		try{
-			this.out.write(toSend.getBytes("UTF-8"));
-		}catch(IOException e){
-			e.printStackTrace();
-		}
 	}
 	
 	/*Methode d'envoie d'un acquitement positif de connection*/
@@ -183,24 +176,8 @@ public class ClientManager extends Thread{
 	/*Adaptation de la reponse obj pour un envoie bas niveau + envoie*/
 	private void writeJsonString(JsonObject obj){
 		StringBuffer sb = new StringBuffer(obj.toString());
-		sb.append('\n');//Ajout d'un caractère de fin de trame
-		sendString(sb.toString());
-	}
-	
-	/*Lecture bas niveau*/
-	private String readJsonString(){
-		StringBuffer sb = new StringBuffer();
-		int c = 0;
-		try{
-			while(this.in.available() == 0)
-				;
-			while( (c=this.in.read()) != '\n'){
-				sb.append((char)c);//Lecture caractère par caractère
-			}
-		}catch(IOException e){
-			e.printStackTrace();
-		}
-		return sb.toString();
+		sb.append('\n');//Ajout d'un caractï¿½re de fin de trame
+		Protocol.sendString(sb.toString(),this.out);
 	}
 	
 	/*
@@ -214,7 +191,7 @@ public class ClientManager extends Thread{
 		this.ackConnect();
 	}
 	
-	/*Recuperation de info d'un device connecté sous forme 
+	/*Recuperation de info d'un device connectï¿½ sous forme 
 	 * d'object JSON
 	 */
 	private JsonObject getClientJsonObject(ClientManager client){
@@ -227,7 +204,7 @@ public class ClientManager extends Thread{
 		return job.build();
 	}
 	
-	/*Recupération pour une commande de type list de tous les clients connecté sous forme
+	/*Recupï¿½ration pour une commande de type list de tous les clients connectï¿½ sous forme
 	 * d'un tableau JSON
 	 */
 	private JsonArray getConnectedDevice(){
@@ -239,7 +216,7 @@ public class ClientManager extends Thread{
 		return jab.build();
 	}
 	
-	/*Similaire à getConnectedDevice mais applique un filtrage sur le ClassName*/
+	/*Similaire ï¿½ getConnectedDevice mais applique un filtrage sur le ClassName*/
 	private JsonArray getConnectedDeviceByClass(String deviceClass){
 		JsonArrayBuilder jab = Json.createArrayBuilder();
 		for(int i=0 ; i< this.tabClients.length;i++)
@@ -391,7 +368,7 @@ public class ClientManager extends Thread{
 	
 	//FONCTION PRINCIPALE DU THREAD
 	/**
-	* Boucle tant que le client n'as pas envoyé de reqête de type deregister
+	* Boucle tant que le client n'as pas envoyï¿½ de reqï¿½te de type deregister
 	* 
 	* @see java.lang.Thread#run()
 	*/
@@ -400,7 +377,7 @@ public class ClientManager extends Thread{
 		JsonReader jr;
 		JsonObject obj;
 		while(true){
-			jr = Json.createReader(new StringReader(this.readJsonString()));
+			jr = Json.createReader(new StringReader(Protocol.readJsonString(this.in)));
 			obj = jr.readObject();
 			treatCmd(obj.getString("type"),obj);
 		}

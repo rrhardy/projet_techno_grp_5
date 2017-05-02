@@ -28,7 +28,7 @@ public class GPSMapView extends GViewAbstract{
 		this.point = new DefaultWaypoint(frankfurt);
 		jmv.setZoom(7);
 		jmv.setAddressLocation(frankfurt);
-		System.out.println("Configuré");
+		System.out.println("Configure");
 		System.out.println("MAJ du Frame principal");
 		this.frame.setVisible(false);
 		this.frame.getContentPane().removeAll();
