@@ -1,5 +1,0 @@
-Spécifications :
-http://raphael.druon.emi.u-bordeaux.fr/ProjetTechno/slate/index.html
-
-Le serveur (bus) crée un ClientManager dès qu'il accepte une connexion.
-Le ClientManager est un thread qui traite les commandes du capteur auquel il est associé.
