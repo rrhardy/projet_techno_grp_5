@@ -15,6 +15,7 @@ public class Protocol {
 	
 	/**
 	 * Le port de connexion sur le bus
+	 * voir: http://raphael.druon.emi.u-bordeaux.fr/ProjetTechno/slate/index.html
 	 */
 	public static final int PORT_NUMBER = 7182;
 	

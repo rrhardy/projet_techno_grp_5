@@ -14,7 +14,25 @@ import utils.Protocol;
  */
 public class Serveur {
 	
-
+	public static void printCMTab(ClientManager[] cms){
+		for(int i=0 ; i< cms.length ; i++){
+			if(cms[i]!=null)
+				System.out.println("Id: "+i+" CM: "+cms[i].toString());
+			else 
+				System.out.println("Id: "+i+"(NULL)");
+		}
+	}
+	public static int getNextEmpty(ClientManager[] cms){
+		
+		for(int i=0 ; i<cms.length ; i++){
+			if(cms[i] == null)
+				return i;
+			if(cms[i].toClean())
+				return i;
+		}
+		return -1;
+	}
+	
 	public static void main(String[] args) throws IOException{
 		ClientManager[] clients;
 		int nbClients;
@@ -28,14 +46,23 @@ public class Serveur {
 		
 		//boucle d'acceptation des connexions
 		while(true){
-			try{
-				cm = new ClientManager(srv.accept(), nbClients,clients);
-			}catch(IOException e){
-				e.printStackTrace();
+			int nextEmpty = Serveur.getNextEmpty(clients);
+			if(nextEmpty == -1)
+				System.err.println("Capacité max atteinte");
+			
+			else{
+				try{
+					cm = new ClientManager(srv.accept(), nextEmpty,clients);
+				}catch(IOException e){
+					e.printStackTrace();
+				}
+				cm.start();
+				System.out.println("thread " + nbClients + " started");
+		
+				clients[nextEmpty] = cm;
+				nbClients++;
 			}
-			cm.start();
-			System.out.println("thread " + nbClients + " started");
-			clients[nbClients++] = cm;
+			System.out.println("next "+nextEmpty);
 		}
 		
 	}

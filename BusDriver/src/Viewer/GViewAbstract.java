@@ -2,7 +2,7 @@ package Viewer;
 
 import javax.swing.JFrame;
 
-public abstract class GViewAbstract implements GView{
+public abstract class GViewAbstract  extends Thread implements GView{
 	protected int id;
 	protected Viewer v;
 	protected JFrame frame;

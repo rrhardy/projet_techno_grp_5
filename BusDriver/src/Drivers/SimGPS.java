@@ -56,7 +56,7 @@ public class SimGPS extends Thread{
 				System.out.println(e);
 			}
 			count++;
-			if(count == 10)
+			if(count == 20)
 				if(this.c.deRegister()){
 					System.out.println("Terminé");
 					break;

@@ -13,8 +13,8 @@ import BusDriver.BusMessage;
 import utils.Protocol;
 
 /**
- * Cette classe représente l'interface réseau du driver, elle permet d'envoyer des requête spécifique
- * au device de type sender
+ * Cette classe représente l'interface réseau du driver, elle permet d'envoyer des requêtes spécifiques
+ * aux devices de type sender. Implementation des requête register, deregister et send
  * 
  * @author Robin Hardy
  * @author Paul José-Vedrenne
@@ -124,6 +124,12 @@ public class Client {
 		return this.analyzeResponse("send");
 	}
 	
+	/**
+	 * Envoie d'objet JSON sur le réseau. (Envoie de la JSON string correspondante à job
+	 * 
+	 * @param out Le stream de sortie où envoyer l'objet JSON
+	 * @param job L'objet à envoyer 
+	 */
 	public static void writeJsonString(OutputStream out, JsonObject job){
 		StringBuffer sb = new StringBuffer(job.toString());
 		sb.append('\n');

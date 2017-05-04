@@ -86,9 +86,9 @@ public class IHM extends JFrame implements ActionListener{
         
         Thread gvi = null;
 		if(this.focusClass.compareTo("GPS") == 0)
-        	gvi = new Thread(new GPSMapView(this,this.focusId,v));
+        	gvi = new GPSMapView(this,this.focusId,v);
 		else if(this.focusClass.compareTo("Accelerometer") == 0 || this.focusClass.compareTo("Gyroscope") == 0)
-			gvi = new Thread(new TriPointViewer(this,this.focusId,v));
+			gvi = new TriPointViewer(this,this.focusId,v);
 		else
 			System.err.println("Aucun viewer pour la classe "+this.focusClass);
 		if(gvi != null)

@@ -27,6 +27,7 @@ public class ClientManager extends Thread{
 	private boolean status;//Auth status
 	private ClientManager[] tabClients;//tableau des clients 
 	private MessageQueue queue;//file de message
+	private boolean toClean;
 	
 	/**
 	 * Cree une instance de ClientManger servant a gerer un socket connecte au bus
@@ -47,6 +48,7 @@ public class ClientManager extends Thread{
 		this.status = false;
 		this.tabClients = tabClients;
 		this.queue = new MessageQueue(50);
+		this.toClean = false;
 	}
 	
 	/**
@@ -112,9 +114,26 @@ public class ClientManager extends Thread{
 		this.status = status;
 	}
 	
+	public boolean toClean(){
+		return this.toClean;
+	}
 	
+	public String toString(){
+		StringBuffer sb = new StringBuffer();
+		sb.append("ID: ")
+		.append(this.id)
+		.append(" CLASS: ")
+		.append(this.deviceClass)
+		.append(" NAME: ")
+		.append(this.deviceName)
+		.append(" STATUS:")
+		.append(" TOCLEAN:")
+		.append(this.toClean);
+		
+		return sb.toString();
+	}
 	/*
-	 * PRIVATE FUNCTIONS FOR INTERNAL CLASS TREATMENT
+	 * PRIVATE FUNCTIONS FOR INTERNAL OBJECT TREATMENT
 	*/
 	
 	/*Ajoute un nouveau message (contents) à la file*/
@@ -213,6 +232,7 @@ public class ClientManager extends Thread{
 			if(tabClients[i] != null)
 				if(tabClients[i].isConnected())
 					jab.add(this.getClientJsonObject(tabClients[i]));
+		System.out.println("taille reponse: "+jab.build().size());
 		return jab.build();
 	}
 	
@@ -252,6 +272,21 @@ public class ClientManager extends Thread{
 			System.out.println("Demande de connexion");
 			this.getConnect(obj);
 			return;
+		}
+		
+		if(cmd.equals("deregister")){
+			if(obj.getInt("sender_id") == this.id){
+				System.out.println("Deconnexion de "+this.id);
+				job = Json.createObjectBuilder();
+				job.add("type", "deregister");
+				this.createOkResponseBuilder(job);
+				this.writeJsonString(job.build());
+				this.toClean = true;
+				
+			}
+			else
+				this.sendError("deregister", 500);
+			
 		}
 		
 		else if(cmd.equals("list")){
